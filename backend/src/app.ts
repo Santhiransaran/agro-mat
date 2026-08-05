@@ -3,7 +3,9 @@ import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 
+
 import experimentRouter from "./routes/experiment.routes.js";
+import treatmentRouter from "./routes/treatment.routes.js";
 
 import { errorHandler } from "./middleware/error.middleware.js";
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
@@ -36,6 +38,7 @@ app.get("/api/v1/health", (_req, res) => {
 });
 
 app.use("/api/v1/experiments", experimentRouter);
+app.use("/api/v1/treatments", treatmentRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
