@@ -10,6 +10,8 @@ import treatmentRouter from "./routes/treatment.routes.js";
 import observationRouter from "./routes/observation.routes.js";
 import cropPerformanceRouter from "./routes/crop-performance.routes.js";
 import weatherRouter from "./routes/weather.routes.js";
+import labResultRouter from "./routes/lab-result.routes.js";
+
 
 
 import { errorHandler } from "./middleware/error.middleware.js";
@@ -51,6 +53,7 @@ app.use(
   cropPerformanceRouter
 );
 app.use("/api/v1/weather", weatherRouter);
+app.use("/api/v1/lab-results", labResultRouter);
 
 
 
