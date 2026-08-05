@@ -8,6 +8,7 @@ import experimentRouter from "./routes/experiment.routes.js";
 import plotRouter from "./routes/plot.routes.js";
 import treatmentRouter from "./routes/treatment.routes.js";
 import observationRouter from "./routes/observation.routes.js";
+import cropPerformanceRouter from "./routes/crop-performance.routes.js";
 
 import { errorHandler } from "./middleware/error.middleware.js";
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
@@ -43,7 +44,10 @@ app.use("/api/v1/experiments", experimentRouter);
 app.use("/api/v1/treatments", treatmentRouter);
 app.use("/api/v1/plots", plotRouter);
 app.use("/api/v1/observations", observationRouter);
-
+app.use(
+  "/api/v1/crop-performance",
+  cropPerformanceRouter
+);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
