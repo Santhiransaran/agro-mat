@@ -11,6 +11,7 @@ import observationRouter from "./routes/observation.routes.js";
 import cropPerformanceRouter from "./routes/crop-performance.routes.js";
 import weatherRouter from "./routes/weather.routes.js";
 import labResultRouter from "./routes/lab-result.routes.js";
+import analyticsRouter from "./routes/analytics.routes.js";
 
 
 
@@ -54,6 +55,7 @@ app.use(
 );
 app.use("/api/v1/weather", weatherRouter);
 app.use("/api/v1/lab-results", labResultRouter);
+app.use("/api/v1/analytics", analyticsRouter);
 
 
 
