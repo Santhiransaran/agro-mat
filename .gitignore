@@ -1,12 +1,14 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.production
+.env.development.local
+.env.production.local
 
-# Next.js
+# Builds
+dist/
 .next/
 out/
 
@@ -14,15 +16,7 @@ out/
 *.log
 npm-debug.log*
 
-# Coverage
-coverage/
-
-# Operating system
-.DS_Store
-
-# Editor
+# IDE / OS
 .vscode/
 .idea/
-
-# Build output
-dist/
+.DS_Store
