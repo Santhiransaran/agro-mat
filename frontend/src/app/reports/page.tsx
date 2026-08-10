@@ -8,9 +8,13 @@ import {
 import {
   Download,
   FileSpreadsheet,
+  FileText,
   Leaf,
   TriangleAlert,
 } from "lucide-react";
+
+import { jsPDF } from "jspdf";
+import { autoTable } from "jspdf-autotable";
 
 import { apiGet } from "@/lib/api";
 
@@ -106,6 +110,8 @@ export default function ReportsPage() {
             setReport(
               response
             );
+
+            setError("");
           }
         } catch (err) {
           if (!cancelled) {
@@ -217,6 +223,453 @@ export default function ReportsPage() {
     );
   };
 
+  const downloadPdf = () => {
+    if (!report) {
+      return;
+    }
+
+    const doc =
+      new jsPDF();
+
+    const generatedDate =
+      new Date(
+        report.generatedAt
+      ).toLocaleString();
+
+    doc.setFontSize(18);
+
+    doc.text(
+      "IoT Smart Soil Monitoring Report",
+      14,
+      18
+    );
+
+    doc.setFontSize(10);
+
+    doc.text(
+      `Generated: ${generatedDate}`,
+      14,
+      27
+    );
+
+    doc.text(
+      `Device ID: ${report.device.deviceId}`,
+      14,
+      34
+    );
+
+    doc.text(
+      `Device Name: ${report.device.name}`,
+      14,
+      41
+    );
+
+    doc.text(
+      `Status: ${report.device.status}`,
+      14,
+      48
+    );
+
+    let currentY = 55;
+
+    if (
+      report.device.location
+    ) {
+      doc.text(
+        `Location: ${report.device.location}`,
+        14,
+        currentY
+      );
+
+      currentY += 8;
+    }
+
+    if (report.crop) {
+      doc.setFontSize(14);
+
+      doc.text(
+        "Crop Information",
+        14,
+        currentY
+      );
+
+      currentY += 8;
+
+      doc.setFontSize(10);
+
+      doc.text(
+        `Crop: ${report.crop.name}`,
+        14,
+        currentY
+      );
+
+      currentY += 6;
+
+      doc.text(
+        `Variety: ${
+          report.crop.variety ??
+          "N/A"
+        }`,
+        14,
+        currentY
+      );
+
+      currentY += 6;
+
+      doc.text(
+        `Farm Area: ${
+          report.crop.farmArea
+        } ${report.crop.areaUnit}`,
+        14,
+        currentY
+      );
+
+      currentY += 6;
+
+      doc.text(
+        `Planting Date: ${new Date(
+          report.crop.plantingDate
+        ).toLocaleDateString()}`,
+        14,
+        currentY
+      );
+
+      currentY += 10;
+    }
+
+    doc.setFontSize(14);
+
+    doc.text(
+      "Report Summary",
+      14,
+      currentY
+    );
+
+    autoTable(doc, {
+      startY:
+        currentY + 5,
+
+      head: [
+        [
+          "Item",
+          "Value",
+        ],
+      ],
+
+      body: [
+        [
+          "Total Readings",
+          String(
+            report.summary
+              .totalReadings
+          ),
+        ],
+
+        [
+          "Total Alerts",
+          String(
+            report.summary
+              .totalAlerts
+          ),
+        ],
+
+        [
+          "Active Alerts",
+          String(
+            report.summary
+              .activeAlerts
+          ),
+        ],
+
+        [
+          "Resolved Alerts",
+          String(
+            report.summary
+              .resolvedAlerts
+          ),
+        ],
+      ],
+    });
+
+    const summaryEndY =
+      (
+        doc as jsPDF & {
+          lastAutoTable?: {
+            finalY: number;
+          };
+        }
+      ).lastAutoTable
+        ?.finalY ??
+      currentY + 45;
+
+    doc.setFontSize(14);
+
+    doc.text(
+      "Average Sensor Values",
+      14,
+      summaryEndY + 10
+    );
+
+    autoTable(doc, {
+      startY:
+        summaryEndY + 15,
+
+      head: [
+        [
+          "Parameter",
+          "Average",
+          "Unit",
+        ],
+      ],
+
+      body: [
+        [
+          "Nitrogen",
+          String(
+            report.summary
+              .averages
+              .nitrogen
+          ),
+          "mg/kg",
+        ],
+
+        [
+          "Phosphorus",
+          String(
+            report.summary
+              .averages
+              .phosphorus
+          ),
+          "mg/kg",
+        ],
+
+        [
+          "Potassium",
+          String(
+            report.summary
+              .averages
+              .potassium
+          ),
+          "mg/kg",
+        ],
+
+        [
+          "Soil pH",
+          String(
+            report.summary
+              .averages.ph
+          ),
+          "",
+        ],
+
+        [
+          "EC",
+          String(
+            report.summary
+              .averages.ec
+          ),
+          "mS/cm",
+        ],
+
+        [
+          "Soil Moisture",
+          String(
+            report.summary
+              .averages
+              .soilMoisture
+          ),
+          "%",
+        ],
+
+        [
+          "Soil Temperature",
+          String(
+            report.summary
+              .averages
+              .soilTemperature
+          ),
+          "C",
+        ],
+
+        [
+          "Air Temperature",
+          String(
+            report.summary
+              .averages
+              .airTemperature
+          ),
+          "C",
+        ],
+
+        [
+          "Humidity",
+          String(
+            report.summary
+              .averages
+              .humidity
+          ),
+          "%",
+        ],
+      ],
+    });
+
+    const averageEndY =
+      (
+        doc as jsPDF & {
+          lastAutoTable?: {
+            finalY: number;
+          };
+        }
+      ).lastAutoTable
+        ?.finalY ??
+      summaryEndY + 90;
+
+    if (
+      report.alerts.length >
+      0
+    ) {
+      doc.setFontSize(14);
+
+      doc.text(
+        "Alerts",
+        14,
+        averageEndY + 10
+      );
+
+      autoTable(doc, {
+        startY:
+          averageEndY + 15,
+
+        head: [
+          [
+            "Type",
+            "Severity",
+            "Status",
+            "Created",
+          ],
+        ],
+
+        body:
+          report.alerts.map(
+            (alert) => [
+              alert.type.replace(
+                /_/g,
+                " "
+              ),
+
+              alert.severity,
+
+              alert.isResolved
+                ? "Resolved"
+                : "Active",
+
+              new Date(
+                alert.createdAt
+              ).toLocaleString(),
+            ]
+          ),
+
+        styles: {
+          fontSize: 8,
+        },
+
+        headStyles: {
+          fontSize: 8,
+        },
+      });
+    }
+
+    doc.addPage();
+
+    doc.setFontSize(14);
+
+    doc.text(
+      "Sensor Reading History",
+      14,
+      18
+    );
+
+    autoTable(doc, {
+      startY: 24,
+
+      head: [
+        [
+          "Time",
+          "N",
+          "P",
+          "K",
+          "pH",
+          "EC",
+          "Moist.",
+          "Soil T",
+          "Air T",
+          "Hum.",
+        ],
+      ],
+
+      body:
+        report.readings.map(
+          (reading) => [
+            new Date(
+              reading.recordedAt
+            ).toLocaleString(),
+
+            reading.nitrogen,
+
+            reading.phosphorus,
+
+            reading.potassium,
+
+            reading.ph,
+
+            reading.ec,
+
+            `${reading.soilMoisture}%`,
+
+            reading.soilTemperature ??
+              "",
+
+            reading.airTemperature,
+
+            `${reading.humidity}%`,
+          ]
+        ),
+
+      styles: {
+        fontSize: 7,
+      },
+
+      headStyles: {
+        fontSize: 7,
+      },
+    });
+
+    const pageCount =
+      doc.getNumberOfPages();
+
+    for (
+      let pageNumber = 1;
+      pageNumber <= pageCount;
+      pageNumber++
+    ) {
+      doc.setPage(
+        pageNumber
+      );
+
+      doc.setFontSize(8);
+
+      doc.text(
+        `AgroSense - Page ${pageNumber} of ${pageCount}`,
+        14,
+        290
+      );
+    }
+
+    doc.save(
+      `agro-report-${report.device.deviceId}.pdf`
+    );
+  };
+
   if (loading) {
     return (
       <div className="p-5 md:p-8">
@@ -262,18 +715,33 @@ export default function ReportsPage() {
             </p>
           </div>
 
-          <button
-            onClick={
-              downloadCsv
-            }
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          >
-            <Download
-              size={18}
-            />
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={
+                downloadCsv
+              }
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-600 bg-white px-5 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+            >
+              <Download
+                size={18}
+              />
 
-            Export CSV
-          </button>
+              Export CSV
+            </button>
+
+            <button
+              onClick={
+                downloadPdf
+              }
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              <FileText
+                size={18}
+              />
+
+              Export PDF
+            </button>
+          </div>
         </div>
       </header>
 
@@ -462,41 +930,49 @@ export default function ReportsPage() {
               averages.nitrogen,
               "mg/kg",
             ],
+
             [
               "Phosphorus",
               averages.phosphorus,
               "mg/kg",
             ],
+
             [
               "Potassium",
               averages.potassium,
               "mg/kg",
             ],
+
             [
               "Soil pH",
               averages.ph,
               "",
             ],
+
             [
               "EC",
               averages.ec,
               "mS/cm",
             ],
+
             [
               "Soil Moisture",
               averages.soilMoisture,
               "%",
             ],
+
             [
               "Soil Temperature",
               averages.soilTemperature,
               "°C",
             ],
+
             [
               "Air Temperature",
               averages.airTemperature,
               "°C",
             ],
+
             [
               "Humidity",
               averages.humidity,
@@ -543,14 +1019,12 @@ export default function ReportsPage() {
             </h3>
 
             <p className="mt-1 text-sm leading-6 text-amber-800">
-              Sensor reports
-              provide monitoring
-              and decision-support
+              Sensor reports provide
+              monitoring and decision-support
               information. Nutrient
               measurements should be
-              periodically validated
-              with laboratory soil
-              testing.
+              periodically validated with
+              laboratory soil testing.
             </p>
           </div>
         </div>
