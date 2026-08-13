@@ -1,521 +1,864 @@
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useState,
-} from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { apiPost } from "@/lib/api";
 
-import {
-  CalendarDays,
-  CheckCircle2,
-  Leaf,
-  Sprout,
-} from "lucide-react";
 
-import {
-  apiGet,
-  apiPatch,
-  apiPost,
-} from "@/lib/api";
+// ============================================================
+// Crop + Variety Options
+// ============================================================
 
-import { Crop } from "@/types/api";
+const cropOptions = {
+  Tomato: [
+    "Thilina",
+    "Rajitha",
+    "Other",
+  ],
 
-interface ActiveCropResponse {
-  success: boolean;
-  data: Crop;
-}
+  Chilli: [
+    "MI-2",
+    "MI-3",
+    "Other",
+  ],
 
-interface CreateCropResponse {
-  success: boolean;
-  message: string;
-  data: Crop;
-}
+  Paddy: [
+    "Bg 352",
+    "Bg 366",
+    "Other",
+  ],
+
+  Brinjal: [
+    "Amanda",
+    "Anjalee",
+    "Other",
+  ],
+
+  Onion: [
+    "Jaffna Local",
+    "Other",
+  ],
+} as const;
+
+
+type CropName =
+  keyof typeof cropOptions;
+
+
+type AreaUnit =
+  | "acre"
+  | "hectare"
+  | "square_meter";
+
+
+// ============================================================
+// Page
+// ============================================================
 
 export default function CropSetupPage() {
-  const [activeCrop, setActiveCrop] =
-    useState<Crop | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  // ==========================================================
+  // Crop State
+  // ==========================================================
 
-  const [submitting, setSubmitting] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState("");
-
-  const [error, setError] =
-    useState("");
-
-  const [form, setForm] = useState({
-    name: "",
-    variety: "",
-    plantingDate: "",
-    expectedHarvestDate: "",
-    farmArea: "",
-    areaUnit: "acre",
-    notes: "",
-  });
-
-  const loadActiveCrop = async () => {
-  const response =
-    await apiGet<ActiveCropResponse>(
-      "/crops/active"
+  const [
+    cropName,
+    setCropName,
+  ] =
+    useState<CropName>(
+      "Tomato"
     );
 
-  return response.data;
-};
 
-useEffect(() => {
-  let cancelled = false;
+  const [
+    variety,
+    setVariety,
+  ] =
+    useState(
+      "Thilina"
+    );
 
-  const fetchActiveCrop = async () => {
-    try {
-      const crop = await loadActiveCrop();
 
-      if (!cancelled) {
-        setActiveCrop(crop);
-      }
-    } catch {
-      if (!cancelled) {
-        setActiveCrop(null);
-      }
-    } finally {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    }
-  };
+  const [
+    plantingDate,
+    setPlantingDate,
+  ] =
+    useState(
+      ""
+    );
 
-  void fetchActiveCrop();
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
+  const [
+    farmArea,
+    setFarmArea,
+  ] =
+    useState(
+      "1"
+    );
 
-  const handleChange = (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLSelectElement>
-      | React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
 
-    setForm((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
-  };
+  const [
+    areaUnit,
+    setAreaUnit,
+  ] =
+    useState<AreaUnit>(
+      "acre"
+    );
 
-  const handleSubmit = async (
-    event: FormEvent
-  ) => {
+
+  // ==========================================================
+  // Device State
+  // ==========================================================
+
+  const [
+    deviceId,
+    setDeviceId,
+  ] =
+    useState(
+      "AGRO-002"
+    );
+
+
+  const [
+    deviceName,
+    setDeviceName,
+  ] =
+    useState(
+      "Tomato Field Monitor"
+    );
+
+
+  const [
+    location,
+    setLocation,
+  ] =
+    useState(
+      ""
+    );
+
+
+  // ==========================================================
+  // UI State
+  // ==========================================================
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      false
+    );
+
+
+  const [
+    message,
+    setMessage,
+  ] =
+    useState(
+      ""
+    );
+
+
+  const [
+    error,
+    setError,
+  ] =
+    useState(
+      ""
+    );
+
+
+  // ==========================================================
+  // Available Varieties
+  // ==========================================================
+
+  const varieties =
+    useMemo(
+      () => {
+
+        return cropOptions[
+          cropName
+        ];
+
+      },
+      [
+        cropName,
+      ]
+    );
+
+
+  // ==========================================================
+  // Crop Selection Change
+  // ==========================================================
+
+  function handleCropChange(
+    value: CropName
+  ) {
+
+    setCropName(
+      value
+    );
+
+
+    const firstVariety =
+      cropOptions[
+        value
+      ][0];
+
+
+    setVariety(
+      firstVariety
+    );
+
+
+    setDeviceName(
+      `${value} Field Monitor`
+    );
+
+
+    setMessage(
+      ""
+    );
+
+
+    setError(
+      ""
+    );
+  }
+
+
+  // ==========================================================
+  // Submit
+  // ==========================================================
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+
     event.preventDefault();
 
-    setMessage("");
-    setError("");
-    setSubmitting(true);
+
+    setLoading(
+      true
+    );
+
+
+    setMessage(
+      ""
+    );
+
+
+    setError(
+      ""
+    );
+
 
     try {
-      const payload = {
-        name: form.name,
-        variety:
-          form.variety || undefined,
 
-        plantingDate:
-          form.plantingDate,
+      // ======================================================
+      // ONE API REQUEST
+      //
+      // Backend will:
+      //
+      // 1. Check whether device already exists
+      // 2. Reuse it if it exists
+      // 3. Create it if it does not exist
+      // 4. Create the crop
+      // 5. Assign the device to the crop
+      // ======================================================
 
-        expectedHarvestDate:
-          form.expectedHarvestDate ||
-          undefined,
+      await apiPost(
+        "/crops/with-device",
+        {
 
-        farmArea:
-          Number(form.farmArea),
+          // --------------------------------------------------
+          // Crop
+          // --------------------------------------------------
 
-        areaUnit:
-          form.areaUnit,
+          name:
+            cropName,
 
-        notes:
-          form.notes || undefined,
-      };
+          variety,
 
-      const response =
-        await apiPost<CreateCropResponse>(
-          "/crops",
-          payload
-        );
+          plantingDate,
 
-      setMessage(response.message);
+          farmArea:
+            Number(
+              farmArea
+            ),
 
-      setForm({
-        name: "",
-        variety: "",
-        plantingDate: "",
-        expectedHarvestDate: "",
-        farmArea: "",
-        areaUnit: "acre",
-        notes: "",
-      });
+          areaUnit,
 
-      const crop = await loadActiveCrop();
-      setActiveCrop(crop);
-    } catch (err) {
+
+          // --------------------------------------------------
+          // IoT Device
+          // --------------------------------------------------
+
+          deviceId:
+            deviceId
+              .trim()
+              .toUpperCase(),
+
+          deviceName:
+            deviceName
+              .trim(),
+
+          deviceLocation:
+            location
+              .trim(),
+        }
+      );
+
+
+      // ======================================================
+      // Success
+      // ======================================================
+
+      setMessage(
+        `${cropName} successfully added and ${deviceId
+          .trim()
+          .toUpperCase()} assigned to it.`
+      );
+
+
+      // ======================================================
+      // Reset Device Fields For Next Crop
+      // ======================================================
+
+      setDeviceId(
+        ""
+      );
+
+
+      setDeviceName(
+        ""
+      );
+
+
+      setLocation(
+        ""
+      );
+
+
+      setPlantingDate(
+        ""
+      );
+
+
+      setFarmArea(
+        "1"
+      );
+
+
+    } catch (
+      err
+    ) {
+
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to create crop"
+          : "Failed to add crop and IoT device."
       );
+
     } finally {
-      setSubmitting(false);
+
+      setLoading(
+        false
+      );
     }
-  };
+  }
 
-  const completeCultivation =
-    async () => {
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to complete the current cultivation?"
-        );
 
-      if (!confirmed) {
-        return;
-      }
-
-      setMessage("");
-      setError("");
-      setSubmitting(true);
-
-      try {
-        const response =
-          await apiPatch<{
-            success: boolean;
-            message: string;
-          }>(
-            "/crops/active/complete"
-          );
-
-        setMessage(response.message);
-
-        try {
-  const crop = await loadActiveCrop();
-  setActiveCrop(crop);
-} catch {
-  setActiveCrop(null);
-}
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to complete cultivation"
-        );
-      } finally {
-        setSubmitting(false);
-      }
-    };
+  // ==========================================================
+  // UI
+  // ==========================================================
 
   return (
-    <div className="p-5 md:p-8">
-      <header className="mb-8">
-        <p className="text-sm font-medium text-emerald-700">
+
+    <div className="space-y-6">
+
+      {/* ==================================================== */}
+      {/* Header */}
+      {/* ==================================================== */}
+
+      <div>
+
+        <p className="text-sm font-medium text-emerald-600">
           Farm Management
         </p>
 
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">
+
+        <h1 className="text-3xl font-bold text-slate-900">
           Crop Setup
         </h1>
 
-        <p className="mt-2 text-slate-500">
-          Configure the crop currently
-          growing on the monitored farm.
+
+        <p className="mt-1 text-sm text-slate-500">
+          Add a crop and register or assign its IoT monitoring device.
         </p>
-      </header>
 
-      {message && (
-        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          {message}
-        </div>
-      )}
+      </div>
 
-      {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
-      {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8">
-          Loading crop information...
-        </div>
-      ) : activeCrop ? (
-        <section className="max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-emerald-50 p-4 text-emerald-700">
-                <Sprout size={28} />
-              </div>
+      {/* ==================================================== */}
+      {/* Form */}
+      {/* ==================================================== */}
 
-              <div>
-                <p className="text-sm text-slate-500">
-                  Active Cultivation
-                </p>
+      <form
+        onSubmit={
+          handleSubmit
+        }
+        className="max-w-4xl space-y-6"
+      >
 
-                <h2 className="text-2xl font-bold">
-                  {activeCrop.name}
-                </h2>
 
-                <p className="text-sm text-slate-500">
-                  {activeCrop.variety ||
-                    "No variety specified"}
-                </p>
-              </div>
-            </div>
+        {/* ================================================== */}
+        {/* Crop Details */}
+        {/* ================================================== */}
 
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Active
-            </span>
-          </div>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Planting Date
-              </p>
+          <div className="mb-6">
 
-              <p className="mt-2 font-semibold">
-                {new Date(
-                  activeCrop.plantingDate
-                ).toLocaleDateString()}
-              </p>
-            </div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Crop Details
+            </h2>
 
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Farm Area
-              </p>
 
-              <p className="mt-2 font-semibold">
-                {activeCrop.farmArea}{" "}
-                {activeCrop.areaUnit}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Expected Harvest
-              </p>
-
-              <p className="mt-2 font-semibold">
-                {activeCrop.expectedHarvestDate
-                  ? new Date(
-                      activeCrop.expectedHarvestDate
-                    ).toLocaleDateString()
-                  : "Not specified"}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Status
-              </p>
-
-              <p className="mt-2 font-semibold capitalize">
-                {activeCrop.status}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 border-t border-slate-100 pt-6">
-            <button
-              onClick={
-                completeCultivation
-              }
-              disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <CheckCircle2 size={18} />
-
-              {submitting
-                ? "Processing..."
-                : "Complete Cultivation"}
-            </button>
-
-            <p className="mt-3 text-xs text-slate-500">
-              Use this only after the crop
-              has been harvested.
+            <p className="text-sm text-slate-500">
+              Select the crop currently planted in this field.
             </p>
-          </div>
-        </section>
-      ) : (
-        <section className="max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-7 flex items-center gap-3">
-            <div className="rounded-xl bg-emerald-50 p-3 text-emerald-700">
-              <Leaf />
-            </div>
 
-            <div>
-              <h2 className="text-xl font-bold">
-                Start New Cultivation
-              </h2>
-
-              <p className="text-sm text-slate-500">
-                Enter the crop information
-                once at the beginning.
-              </p>
-            </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Crop Name
-                </label>
 
-                <input
-                  required
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="Tomato"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
+          <div className="grid gap-5 md:grid-cols-2">
 
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Variety
-                </label>
 
-                <input
-                  name="variety"
-                  value={form.variety}
-                  onChange={handleChange}
-                  placeholder="Thilina"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Planting Date
-                </label>
-
-                <div className="relative">
-                  <CalendarDays
-                    size={18}
-                    className="absolute left-4 top-3.5 text-slate-400"
-                  />
-
-                  <input
-                    required
-                    type="date"
-                    name="plantingDate"
-                    value={
-                      form.plantingDate
-                    }
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Expected Harvest Date
-                </label>
-
-                <input
-                  type="date"
-                  name="expectedHarvestDate"
-                  value={
-                    form.expectedHarvestDate
-                  }
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Farm Area
-                </label>
-
-                <input
-                  required
-                  min="0.01"
-                  step="0.01"
-                  type="number"
-                  name="farmArea"
-                  value={form.farmArea}
-                  onChange={handleChange}
-                  placeholder="1"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Area Unit
-                </label>
-
-                <select
-                  name="areaUnit"
-                  value={form.areaUnit}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                >
-                  <option value="acre">
-                    Acre
-                  </option>
-
-                  <option value="hectare">
-                    Hectare
-                  </option>
-
-                  <option value="square_meter">
-                    Square Meter
-                  </option>
-                </select>
-              </div>
-            </div>
+            {/* ============================================== */}
+            {/* Crop Name */}
+            {/* ============================================== */}
 
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                Notes
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Crop Name
               </label>
 
-              <textarea
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Optional notes about this cultivation"
-                className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-              />
+
+              <select
+                value={
+                  cropName
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    handleCropChange(
+                      event
+                        .target
+                        .value as CropName
+                    )
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              >
+
+                {
+                  Object
+                    .keys(
+                      cropOptions
+                    )
+                    .map(
+                      (
+                        crop
+                      ) => (
+
+                        <option
+                          key={
+                            crop
+                          }
+                          value={
+                            crop
+                          }
+                        >
+                          {
+                            crop
+                          }
+                        </option>
+
+                      )
+                    )
+                }
+
+              </select>
+
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Sprout size={18} />
 
-              {submitting
-                ? "Starting..."
-                : "Start Cultivation"}
-            </button>
-          </form>
+            {/* ============================================== */}
+            {/* Variety */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Variety
+              </label>
+
+
+              <select
+                value={
+                  variety
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setVariety(
+                      event
+                        .target
+                        .value
+                    )
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              >
+
+                {
+                  varieties.map(
+                    (
+                      item
+                    ) => (
+
+                      <option
+                        key={
+                          item
+                        }
+                        value={
+                          item
+                        }
+                      >
+                        {
+                          item
+                        }
+                      </option>
+
+                    )
+                  )
+                }
+
+              </select>
+
+            </div>
+
+
+            {/* ============================================== */}
+            {/* Planting Date */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Planting Date
+              </label>
+
+
+              <input
+                type="date"
+                value={
+                  plantingDate
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setPlantingDate(
+                      event
+                        .target
+                        .value
+                    )
+                }
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+
+            {/* ============================================== */}
+            {/* Farm Area */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Farm Area
+              </label>
+
+
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={
+                  farmArea
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setFarmArea(
+                      event
+                        .target
+                        .value
+                    )
+                }
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+
+            {/* ============================================== */}
+            {/* Area Unit */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Area Unit
+              </label>
+
+
+              <select
+                value={
+                  areaUnit
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setAreaUnit(
+                      event
+                        .target
+                        .value as AreaUnit
+                    )
+                }
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              >
+
+                <option value="acre">
+                  Acre
+                </option>
+
+
+                <option value="hectare">
+                  Hectare
+                </option>
+
+
+                <option value="square_meter">
+                  Square Meter
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
         </section>
-      )}
+
+
+        {/* ================================================== */}
+        {/* IoT Device */}
+        {/* ================================================== */}
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+          <div className="mb-6">
+
+            <h2 className="text-lg font-semibold text-slate-900">
+              IoT Device
+            </h2>
+
+
+            <p className="text-sm text-slate-500">
+              Register a new device or assign an existing device to this crop.
+            </p>
+
+          </div>
+
+
+          <div className="grid gap-5 md:grid-cols-2">
+
+
+            {/* ============================================== */}
+            {/* Device ID */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Device ID
+              </label>
+
+
+              <input
+                type="text"
+                value={
+                  deviceId
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setDeviceId(
+                      event
+                        .target
+                        .value
+                        .toUpperCase()
+                    )
+                }
+                placeholder="AGRO-002"
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 uppercase text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+
+            {/* ============================================== */}
+            {/* Device Name */}
+            {/* ============================================== */}
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Device Name
+              </label>
+
+
+              <input
+                type="text"
+                value={
+                  deviceName
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setDeviceName(
+                      event
+                        .target
+                        .value
+                    )
+                }
+                placeholder={`${cropName} Field Monitor`}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+
+            {/* ============================================== */}
+            {/* Device Location */}
+            {/* ============================================== */}
+
+            <div className="md:col-span-2">
+
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Device Location
+              </label>
+
+
+              <input
+                type="text"
+                value={
+                  location
+                }
+                onChange={
+                  (
+                    event
+                  ) =>
+                    setLocation(
+                      event
+                        .target
+                        .value
+                    )
+                }
+                placeholder="Field 2"
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* ================================================== */}
+        {/* Success Message */}
+        {/* ================================================== */}
+
+        {
+          message && (
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+
+              {
+                message
+              }
+
+            </div>
+
+          )
+        }
+
+
+        {/* ================================================== */}
+        {/* Error Message */}
+        {/* ================================================== */}
+
+        {
+          error && (
+
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+
+              {
+                error
+              }
+
+            </div>
+
+          )
+        }
+
+
+        {/* ================================================== */}
+        {/* Submit */}
+        {/* ================================================== */}
+
+        <button
+          type="submit"
+          disabled={
+            loading
+          }
+          className="rounded-xl bg-emerald-600 px-6 py-3 font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+
+          {
+            loading
+              ? "Adding Crop..."
+              : "Add Crop & IoT Device"
+          }
+
+        </button>
+
+      </form>
+
     </div>
   );
 }

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "author": "Santhiran Saran",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 152.3, "left": 143.8, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot2", "top": 161.9, "left": -163.4, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot3", "top": -97.3, "left": -105.8, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot4", "top": -87.7, "left": 143.8, "attrs": {} },
+    { "type": "wokwi-ds18b20", "id": "temp1", "top": -173.93, "left": -216.72, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht1", "top": 259.5, "left": -34.2, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:3V3", "pot3:VCC", "green", [ "h0" ] ],
+    [ "esp:35", "pot3:SIG", "green", [ "h0" ] ],
+    [ "esp:GND.2", "pot3:GND", "black", [ "v-57.6", "h-177.56" ] ],
+    [ "esp:3V3", "pot4:VCC", "green", [ "h187.39", "v-48" ] ],
+    [ "esp:32", "pot4:SIG", "green", [ "h0" ] ],
+    [ "esp:GND.2", "pot4:GND", "black", [ "v0" ] ],
+    [ "esp:33", "pot2:SIG", "green", [ "h0" ] ],
+    [ "esp:GND.1", "pot2:GND", "black", [ "h0" ] ],
+    [ "esp:3V3", "pot2:VCC", "green", [ "h0" ] ],
+    [ "esp:34", "pot1:SIG", "green", [ "h0" ] ],
+    [ "esp:GND.1", "pot1:GND", "black", [ "h0" ] ],
+    [ "esp:3V3", "pot1:VCC", "green", [ "h0" ] ],
+    [ "esp:GND.2", "temp1:GND", "magenta", [ "v0" ] ],
+    [ "temp1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "esp:26", "temp1:DQ", "green", [ "h408.19", "v355.2", "h-76.8", "v-86.4" ] ],
+    [ "dht1:GND", "esp:GND.1", "yellow", [ "v0" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "dht1:SDA", "esp:27", "green", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

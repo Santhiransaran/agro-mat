@@ -3,8 +3,7 @@ import {
   Response,
 } from "express";
 
-import { Crop } from "../models/crop.model.js";
-import { Device } from "../models/device.model.js";
+import Crop from "../models/crop.model.js";import { Device } from "../models/device.model.js";
 import { SensorReading } from "../models/sensorReading.model.js";
 import { Alert } from "../models/alert.model.js";
 

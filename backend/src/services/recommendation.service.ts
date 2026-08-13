@@ -1,5 +1,4 @@
-import { Crop } from "../models/crop.model.js";
-
+import Crop from "../models/crop.model.js";
 import { CropRequirement } from "../models/cropRequirement.model.js";
 
 import { Device } from "../models/device.model.js";

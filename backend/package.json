@@ -8,7 +8,8 @@
   "build": "tsc",
   "start": "node dist/server.js",
   "typecheck": "tsc --noEmit",
-  "seed:requirements": "tsx src/seeds/seedCropRequirements.ts"
+  "seed:requirements": "tsx src/seeds/seedCropRequirements.ts",
+  "migrate:legacy-crop-device": "tsx src/scripts/migrateLegacyCropDevice.ts"
 },
   "keywords": [],
   "author": "",

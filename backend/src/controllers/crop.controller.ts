@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
-import { Crop } from "../models/crop.model.js";
-
+import Crop from "../models/crop.model.js";
 export const createCrop = async (
   req: Request,
   res: Response

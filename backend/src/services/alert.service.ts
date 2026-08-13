@@ -1,7 +1,6 @@
 import { Alert, AlertType } from "../models/alert.model.js";
 import { Device } from "../models/device.model.js";
-import { Crop } from "../models/crop.model.js";
-import { CropRequirement } from "../models/cropRequirement.model.js";
+import Crop from "../models/crop.model.js";import { CropRequirement } from "../models/cropRequirement.model.js";
 import { SensorReading } from "../models/sensorReading.model.js";
 
 interface CreateAlertInput {

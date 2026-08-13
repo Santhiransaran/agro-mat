@@ -1,96 +1,123 @@
-import mongoose, { Document, Schema } from "mongoose";
-
-export type CropStatus =
-  | "planned"
-  | "active"
-  | "completed";
+import mongoose, {
+  Document,
+  Model,
+  Schema,
+  Types,
+} from "mongoose";
 
 export interface ICrop extends Document {
   name: string;
-
   variety?: string;
 
   plantingDate: Date;
-
   expectedHarvestDate?: Date;
-
   actualHarvestDate?: Date;
 
   farmArea: number;
 
-  areaUnit: "acre" | "hectare" | "square_meter";
+  areaUnit:
+    | "acre"
+    | "hectare"
+    | "square_meter";
 
-  status: CropStatus;
+  status:
+    | "planned"
+    | "active"
+    | "completed";
 
   notes?: string;
+
+  // IoT device assigned to this crop
+  device?: Types.ObjectId;
 
   createdAt: Date;
   updatedAt: Date;
 }
 
-const cropSchema = new Schema<ICrop>(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+const cropSchema =
+  new Schema<ICrop>(
+    {
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    variety: {
-      type: String,
-      trim: true,
-    },
+      variety: {
+        type: String,
+        trim: true,
+      },
 
-    plantingDate: {
-      type: Date,
-      required: true,
-    },
+      plantingDate: {
+        type: Date,
+        required: true,
+      },
 
-    expectedHarvestDate: {
-      type: Date,
-    },
+      expectedHarvestDate: {
+        type: Date,
+      },
 
-    actualHarvestDate: {
-      type: Date,
-    },
+      actualHarvestDate: {
+        type: Date,
+      },
 
-    farmArea: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+      farmArea: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
 
-    areaUnit: {
-      type: String,
-      enum: [
-        "acre",
-        "hectare",
-        "square_meter",
-      ],
-      default: "acre",
-    },
+      areaUnit: {
+        type: String,
+        enum: [
+          "acre",
+          "hectare",
+          "square_meter",
+        ],
+        required: true,
+      },
 
-    status: {
-      type: String,
-      enum: [
-        "planned",
-        "active",
-        "completed",
-      ],
-      default: "active",
-    },
+      status: {
+        type: String,
+        enum: [
+          "planned",
+          "active",
+          "completed",
+        ],
+        default: "active",
+      },
 
-    notes: {
-      type: String,
-      trim: true,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
+      notes: {
+        type: String,
+        trim: true,
+      },
 
-export const Crop = mongoose.model<ICrop>(
-  "Crop",
-  cropSchema
-);
+      // -----------------------------------------
+      // Device assigned to this crop
+      // -----------------------------------------
+
+      device: {
+        type: Schema.Types.ObjectId,
+        ref: "Device",
+        required: false,
+        index: true,
+      },
+    },
+    {
+      timestamps: true,
+    }
+  );
+
+cropSchema.index({
+  status: 1,
+  device: 1,
+});
+
+const Crop: Model<ICrop> =
+  mongoose.models.Crop ||
+  mongoose.model<ICrop>(
+    "Crop",
+    cropSchema
+  );
+
+export default Crop;
