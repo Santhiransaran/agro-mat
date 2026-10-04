@@ -1,7 +1,8 @@
 import { Device } from "../models/device.model.js";
 import { Alert } from "../models/alert.model.js";
 
-const OFFLINE_THRESHOLD_MINUTES = 15;
+const OFFLINE_THRESHOLD_MINUTES = 2;
+
 
 export const checkDeviceStatuses =
   async (): Promise<void> => {

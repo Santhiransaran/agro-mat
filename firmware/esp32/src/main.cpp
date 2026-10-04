@@ -2,7 +2,7 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <WiFiClientSecure.h>
+#include <WiFiClient.h>
 
 #include <DHTesp.h>
 #include <OneWire.h>
@@ -53,7 +53,7 @@ const char* WIFI_PASSWORD = "";
 //
 // ============================================================
 
-const char* DEVICE_ID = "AGRO-003";
+const char* DEVICE_ID = "AGRO-001";
 
 
 // ============================================================
@@ -67,10 +67,8 @@ const char* DEVICE_ID = "AGRO-003";
 // Update this URL when a new tunnel is created.
 //
 // ============================================================
-const char* API_URL =
-  "https://completing-trees-lowest-proof.trycloudflare.com/api/v1/readings";
-
-
+ const char* API_URL =
+"https://abc-def.trycloudflare.com/api/v1/readings";
 // ============================================================
 // Potentiometer Pins
 // ============================================================
@@ -602,14 +600,7 @@ int performHttpPost(
   const String& jsonPayload
 ) {
 
-  WiFiClientSecure client;
-
-
-  // ==========================================================
-  // Development / Simulation only
-  // ==========================================================
-
-  client.setInsecure();
+  WiFiClient client;
 
 
   HTTPClient http;
